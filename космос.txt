@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Spaceship Porthole View — Neon + Zodiac Links</title>
+  <style>
+    :root {
+      --metal-primary: #A7A9AC;
+      --metal-secondary: #4B4E52;
+
+      --space-bg: #0B0D15;
+
+      /* Neon palette */
+      --neon: #5EFFAB;
+      --neon-bright: #00FFC8;
+      --neon-blue: rgba(120, 170, 255, 0.65);
+
+      --hud-text: rgba(225, 235, 255, 0.92);
+      --hud-muted: rgba(225, 235, 255, 0.62);
+      --hud-panel: rgba(9, 12, 22, 0.55);
+      --hud-border: rgba(180, 210, 255, 0.18);
+
+      --shadow-strong: rgba(0, 0, 0, 0.55);
+      --shadow-soft: rgba(0, 0, 0, 0.28);
+
+      --radius: 18px;
+      --unit: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 900px at 50% 35%, #101526 0%, #070914 55%, #04040b 100%);
+      color: var(--hud-text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Roboto Mono", "Liberation Mono", "Courier New", monospace;
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: clamp(12px, 3vw, 28px);
+    }
+
+    .cockpit {
+      width: min(980px, 92vw);
+      aspect-ratio: 1 / 1;
+      max-height: 92vh;
+      position: relative;
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 24px 55px var(--shadow-strong));
+    }
+
+    /* Metallic frame */
+    .porthole-frame {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      position: relative;
+      padding: clamp(14px, 3.2vw, 30px);
+      background:
+        radial-gradient(closest-side at 42% 38%, rgba(255,255,255,0.18), rgba(255,255,255,0.00) 55%),
+        radial-gradient(closest-side at 62% 68%, rgba(0,0,0,0.40), rgba(0,0,0,0.00) 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.00) 35%),
+        linear-gradient(225deg, rgba(0,0,0,0.20), rgba(0,0,0,0.00) 42%),
+        linear-gradient(180deg, #b8babd 0%, #85888c 45%, #5b5e63 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.14),
+        inset 0 18px 30px rgba(255,255,255,0.06),
+        inset 0 -28px 42px rgba(0,0,0,0.25),
+        0 18px 60px rgba(0,0,0,0.55);
+      isolation: isolate;
+    }
+
+    .porthole-frame::before {
+      content: "";
+      position: absolute;
+      inset: clamp(10px, 2.4vw, 18px);
+      border-radius: 999px;
+      background:
+        radial-gradient(closest-side at 50% 50%, rgba(255,255,255,0.10), rgba(255,255,255,0.00) 58%),
+        linear-gradient(180deg, #a9acaf 0%, #6b6e73 55%, #3e4146 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.10),
+        inset 0 14px 22px rgba(0,0,0,0.18);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bolts {
+      position: absolute;
+      inset: clamp(10px, 2.4vw, 18px);
+      border-radius: 999px;
+      pointer-events: none;
+      opacity: 0.35;
+      background:
+        radial-gradient(circle at 50% 5%, rgba(255,255,255,0.70) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 95% 50%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 80% 85%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 50% 95%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 20% 85%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 5% 50%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px),
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,0.65) 0 3px, rgba(0,0,0,0.00) 4px);
+      filter: blur(0.2px);
+      z-index: 2;
+    }
+
+    .porthole-glass {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      background: radial-gradient(closest-side at 50% 50%, rgba(18, 24, 44, 0.55), rgba(7, 9, 20, 0.90));
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.10),
+        inset 0 0 60px rgba(0,0,0,0.65);
+      z-index: 3;
+    }
+
+    canvas#spaceCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--space-bg);
+      cursor: default;
+    }
+
+    /* -------------------------
+       Neon bezel enhancements
+       ------------------------- */
+
+    /* Neon ring around the glass: uses multiple shadows + animated pulse */
+    .neon-ring {
+      position: absolute;
+      inset: clamp(12px, 2.8vw, 22px);
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 4;
+      /* A thin bright core + soft glows */
+      box-shadow:
+        inset 0 0 0 2px rgba(94,255,171,0.55),
+        inset 0 0 18px rgba(94,255,171,0.22),
+        inset 0 0 42px rgba(0,255,200,0.10),
+        0 0 18px rgba(94,255,171,0.20),
+        0 0 44px rgba(0,255,200,0.14),
+        0 0 80px rgba(94,255,171,0.08);
+      background:
+        radial-gradient(closest-side, rgba(0,0,0,0) 78%, rgba(94,255,171,0.05) 80%, rgba(0,255,200,0.06) 86%, rgba(0,0,0,0) 92%),
+        conic-gradient(from 0deg,
+          rgba(0,255,200,0.00) 0deg,
+          rgba(0,255,200,0.12) 18deg,
+          rgba(94,255,171,0.00) 55deg,
+          rgba(120,170,255,0.10) 90deg,
+          rgba(0,255,200,0.00) 140deg,
+          rgba(94,255,171,0.10) 190deg,
+          rgba(0,255,200,0.00) 260deg,
+          rgba(120,170,255,0.08) 320deg,
+          rgba(0,255,200,0.00) 360deg
+        );
+      opacity: 0.9;
+      animation: neonPulse 3.6s ease-in-out infinite;
+      filter: saturate(1.12);
+    }
+
+    @keyframes neonPulse {
+      0%, 100% {
+        opacity: 0.78;
+        transform: scale(1);
+        filter: blur(0px) saturate(1.05);
+      }
+      50% {
+        opacity: 0.98;
+        transform: scale(1.003);
+        filter: blur(0.2px) saturate(1.18);
+      }
+    }
+
+    /* Scanlines + subtle energy arcs: lightweight CSS animation */
+    .bezel-effects {
+      position: absolute;
+      inset: clamp(10px, 2.4vw, 18px);
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 5;
+      mix-blend-mode: screen;
+      opacity: 0.55;
+    }
+
+    .bezel-effects::before {
+      /* moving scanlines */
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(0,255,200,0.00) 0px,
+          rgba(0,255,200,0.00) 7px,
+          rgba(0,255,200,0.035) 9px,
+          rgba(0,255,200,0.00) 12px
+        );
+      mask-image: radial-gradient(closest-side, rgba(0,0,0,0) 72%, rgba(0,0,0,1) 78%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,0) 72%, rgba(0,0,0,1) 78%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%);
+      animation: scanMove 2.9s linear infinite;
+      opacity: 0.55;
+      filter: blur(0.25px);
+    }
+
+    @keyframes scanMove {
+      0% { transform: translateY(-18px); }
+      100% { transform: translateY(18px); }
+    }
+
+    .bezel-effects::after {
+      /* rotating energy arcs */
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background:
+        conic-gradient(from 0deg,
+          rgba(0,255,200,0.00) 0deg,
+          rgba(0,255,200,0.00) 25deg,
+          rgba(0,255,200,0.10) 30deg,
+          rgba(0,255,200,0.00) 46deg,
+          rgba(94,255,171,0.00) 80deg,
+          rgba(94,255,171,0.12) 92deg,
+          rgba(94,255,171,0.00) 110deg,
+          rgba(120,170,255,0.00) 155deg,
+          rgba(120,170,255,0.10) 168deg,
+          rgba(120,170,255,0.00) 185deg,
+          rgba(0,255,200,0.00) 360deg
+        );
+      mask-image: radial-gradient(closest-side, rgba(0,0,0,0) 70%, rgba(0,0,0,1) 78%, rgba(0,0,0,1) 96%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,0) 70%, rgba(0,0,0,1) 78%, rgba(0,0,0,1) 96%, rgba(0,0,0,0) 100%);
+      animation: arcsRotate 5.6s linear infinite;
+      opacity: 0.55;
+      filter: blur(0.35px);
+    }
+
+    @keyframes arcsRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .glass-reflection {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.55;
+      background:
+        radial-gradient(900px 520px at 30% 20%, rgba(255,255,255,0.15), rgba(255,255,255,0.00) 60%),
+        radial-gradient(700px 500px at 70% 35%, rgba(120, 255, 200, 0.08), rgba(0,0,0,0.00) 62%),
+        linear-gradient(115deg, rgba(255,255,255,0.14), rgba(255,255,255,0.00) 45%),
+        linear-gradient(205deg, rgba(255,255,255,0.08), rgba(255,255,255,0.00) 40%);
+      filter: blur(0.2px);
+      z-index: 6;
+    }
+
+    .glass-reflection::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 999px;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.10),
+        inset 0 0 14px rgba(94, 255, 171, 0.05);
+      opacity: 0.9;
+    }
+
+    /* HUD */
+    .hud {
+      position: absolute;
+      left: clamp(10px, 2vw, 18px);
+      top: clamp(10px, 2vw, 18px);
+      width: min(360px, 78vw);
+      border-radius: var(--radius);
+      background: var(--hud-panel);
+      border: 1px solid var(--hud-border);
+      box-shadow: 0 14px 42px var(--shadow-soft);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: calc(var(--unit) * 1.5);
+      user-select: none;
+      z-index: 20;
+    }
+
+    .hud h1 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(225, 235, 255, 0.85);
+    }
+
+    .hud-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .hud-label {
+      font-size: 13px;
+      color: var(--hud-text);
+    }
+
+    .hud-hint {
+      font-size: 12px;
+      color: var(--hud-muted);
+      line-height: 1.35;
+      margin-top: 10px;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+      color: var(--hud-text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+      outline: none;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      border-color: rgba(94, 255, 171, 0.35);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button[aria-pressed="true"] {
+      border-color: rgba(94, 255, 171, 0.55);
+      box-shadow:
+        0 0 0 2px rgba(94, 255, 171, 0.10) inset,
+        0 0 22px rgba(94, 255, 171, 0.10);
+    }
+
+    .slider-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--neon);
+    }
+
+    .chip {
+      font-size: 12px;
+      color: rgba(225, 235, 255, 0.85);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.22);
+      min-width: 64px;
+      text-align: right;
+    }
+
+    /* Links panel */
+    .links-panel {
+      margin-top: 12px;
+      border-top: 1px solid rgba(180, 210, 255, 0.12);
+      padding-top: 12px;
+      display: none;
+    }
+
+    .links-panel.open {
+      display: block;
+    }
+
+    .links-panel-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .links-panel-title .title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(225, 235, 255, 0.78);
+    }
+
+    .links-panel-title .sub {
+      font-size: 12px;
+      color: rgba(225, 235, 255, 0.56);
+    }
+
+    .links-list {
+      display: grid;
+      gap: 8px;
+      max-height: min(42vh, 360px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .link-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sign-label {
+      font-size: 12px;
+      color: rgba(225, 235, 255, 0.86);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .sign-glyph {
+      width: 18px;
+      text-align: center;
+      color: rgba(160, 255, 220, 0.95);
+      filter: drop-shadow(0 0 10px rgba(0, 255, 200, 0.22));
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      color: rgba(225, 235, 255, 0.92);
+      outline: none;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    .url-input:focus {
+      border-color: rgba(0, 255, 200, 0.42);
+      box-shadow: 0 0 0 2px rgba(0, 255, 200, 0.10);
+    }
+
+    .url-input::placeholder {
+      color: rgba(225, 235, 255, 0.35);
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      left: clamp(10px, 2vw, 18px);
+      top: calc(clamp(10px, 2vw, 18px) + 62px);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(9, 12, 22, 0.65);
+      border: 1px solid rgba(0, 255, 200, 0.18);
+      color: rgba(225, 235, 255, 0.92);
+      font-size: 12px;
+      line-height: 1.25;
+      max-width: min(420px, 82vw);
+      box-shadow: 0 18px 55px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      z-index: 30;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast strong {
+      color: rgba(160, 255, 220, 0.95);
+      font-weight: 700;
+    }
+
+    /* Bottom-right readout */
+    .readout {
+      position: absolute;
+      right: clamp(10px, 2vw, 18px);
+      bottom: clamp(10px, 2vw, 18px);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(9, 12, 22, 0.38);
+      border: 1px solid rgba(180, 210, 255, 0.14);
+      color: rgba(225, 235, 255, 0.72);
+      font-size: 12px;
+      line-height: 1.25;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-width: min(360px, 78vw);
+      z-index: 20;
+    }
+
+    .kbd {
+      border: 1px solid rgba(255,255,255,0.22);
+      border-bottom-color: rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .hud { width: min(340px, 88vw); }
+      .readout { display: none; }
+      .link-row { grid-template-columns: 1fr; }
+      .sign-label { justify-content: space-between; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="cockpit" aria-label="Spaceship porthole view">
+      <div class="porthole-frame">
+        <div class="bolts"></div>
+
+        <div class="porthole-glass">
+          <canvas id="spaceCanvas" aria-label="Outer space view canvas"></canvas>
+
+          <!-- Neon bezel overlays (tasteful, CSS-only) -->
+          <div class="neon-ring" aria-hidden="true"></div>
+          <div class="bezel-effects" aria-hidden="true"></div>
+
+          <div class="glass-reflection" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="hud" role="group" aria-label="HUD controls">
+        <h1>HUD / ПОРТ</h1>
+
+        <div class="hud-row">
+          <div class="hud-label">Warp / Гипер</div>
+          <button id="warpButton" class="button" type="button" aria-pressed="false" title="Toggle warp speed (W)">
+            OFF
+          </button>
+        </div>
+
+        <div class="hud-row">
+          <div class="hud-label">Show names / Имена</div>
+          <button id="namesButton" class="button" type="button" aria-pressed="true" title="Toggle constellation labels (N)">
+            ON
+          </button>
+        </div>
+
+        <div class="hud-row">
+          <div class="hud-label">Links / Ссылки</div>
+          <button id="linksButton" class="button" type="button" aria-pressed="false" title="Toggle links panel (L)">
+            CLOSED
+          </button>
+        </div>
+
+        <div class="hud-row">
+          <div class="hud-label">Speed / Скорость</div>
+          <div class="slider-wrap">
+            <input id="speedSlider" type="range" min="0" max="100" value="35" step="1" aria-label="Speed slider" />
+            <div class="chip" id="speedValue">35%</div>
+          </div>
+        </div>
+
+        <div class="links-panel" id="linksPanel" aria-label="Zodiac link manager">
+          <div class="links-panel-title">
+            <div class="title">Zodiac URLs</div>
+            <div class="sub">localStorage</div>
+          </div>
+          <div class="links-list" id="linksList"></div>
+        </div>
+
+        <div class="hud-hint">
+          Mouse: parallax + hover • <span class="kbd">W</span> warp • <span class="kbd">N</span> names • <span class="kbd">L</span> links • click a constellation to open URL.
+        </div>
+      </div>
+
+      <div class="toast" id="toast" aria-live="polite"></div>
+
+      <div class="readout" id="readout" aria-live="polite">
+        OUTER VIEW: ACTIVE<br />
+        PARALLAX: ENABLED<br />
+        CONSTELLATIONS: DRIFTING
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ----------------------------
+         DOM + controls
+      ---------------------------- */
+      const canvas = document.getElementById("spaceCanvas");
+      const context = canvas.getContext("2d", { alpha: false });
+
+      const warpButton = document.getElementById("warpButton");
+      const namesButton = document.getElementById("namesButton");
+      const linksButton = document.getElementById("linksButton");
+      const speedSlider = document.getElementById("speedSlider");
+      const speedValue = document.getElementById("speedValue");
+      const readout = document.getElementById("readout");
+      const toast = document.getElementById("toast");
+
+      const linksPanel = document.getElementById("linksPanel");
+      const linksList = document.getElementById("linksList");
+
+      const LOCAL_STORAGE_KEY = "zodiacLinks.v1";
+
+      const state = {
+        warp: false,
+        showNames: true,
+        linksPanelOpen: false,
+        speedPercent: Number(speedSlider.value) || 35,
+
+        pointerTargetX: 0,
+        pointerTargetY: 0,
+        pointerSmoothedX: 0,
+        pointerSmoothedY: 0,
+
+        prefersReducedMotion: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+
+        // Interactivity
+        hoveredInstanceId: null,
+        // URL mapping: key -> url
+        zodiacLinks: Object.create(null),
+
+        // Toast timer
+        toastTimeoutHandle: null
+      };
+
+      function setWarpEnabled(enabled) {
+        state.warp = Boolean(enabled);
+        warpButton.setAttribute("aria-pressed", String(state.warp));
+        warpButton.textContent = state.warp ? "ON" : "OFF";
+        updateReadout();
+      }
+
+      function setShowNames(enabled) {
+        state.showNames = Boolean(enabled);
+        namesButton.setAttribute("aria-pressed", String(state.showNames));
+        namesButton.textContent = state.showNames ? "ON" : "OFF";
+      }
+
+      function setLinksPanelOpen(enabled) {
+        state.linksPanelOpen = Boolean(enabled);
+        linksButton.setAttribute("aria-pressed", String(state.linksPanelOpen));
+        linksButton.textContent = state.linksPanelOpen ? "OPEN" : "CLOSED";
+        linksPanel.classList.toggle("open", state.linksPanelOpen);
+      }
+
+      function setSpeedPercent(value) {
+        state.speedPercent = Math.max(0, Math.min(100, Number(value) || 0));
+        speedSlider.value = String(state.speedPercent);
+        speedValue.textContent = state.speedPercent + "%";
+      }
+
+      function updateReadout() {
+        if (!readout) return;
+        readout.innerHTML =
+          "OUTER VIEW: ACTIVE<br />" +
+          "PARALLAX: ENABLED<br />" +
+          "CONSTELLATIONS: DRIFTING<br />" +
+          "WARP: " + (state.warp ? "ENGAGED" : "IDLE");
+      }
+
+      function showToast(htmlText, durationMs) {
+        const ms = Math.max(900, Number(durationMs) || 1800);
+        toast.innerHTML = htmlText;
+        toast.classList.add("show");
+        if (state.toastTimeoutHandle) window.clearTimeout(state.toastTimeoutHandle);
+        state.toastTimeoutHandle = window.setTimeout(() => {
+          toast.classList.remove("show");
+        }, ms);
+      }
+
+      warpButton.addEventListener("click", () => setWarpEnabled(!state.warp));
+      namesButton.addEventListener("click", () => setShowNames(!state.showNames));
+      linksButton.addEventListener("click", () => setLinksPanelOpen(!state.linksPanelOpen));
+      speedSlider.addEventListener("input", (event) => setSpeedPercent(event.target.value));
+
+      // Keyboard shortcuts
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "w" || event.key === "W") setWarpEnabled(!state.warp);
+        if (event.key === "n" || event.key === "N") setShowNames(!state.showNames);
+        if (event.key === "l" || event.key === "L") setLinksPanelOpen(!state.linksPanelOpen);
+      });
+
+      // Mouse parallax for whole window
+      window.addEventListener("pointermove", (event) => {
+        const width = window.innerWidth || 1;
+        const height = window.innerHeight || 1;
+        const x = (event.clientX / width) * 2 - 1;
+        const y = (event.clientY / height) * 2 - 1;
+        state.pointerTargetX = x;
+        state.pointerTargetY = y;
+      }, { passive: true });
+
+      window.addEventListener("pointerleave", () => {
+        state.pointerTargetX = 0;
+        state.pointerTargetY = 0;
+      });
+
+      /* ----------------------------
+         Canvas sizing + DPI handling
+      ---------------------------- */
+      const render = {
+        devicePixelRatio: 1,
+        width: 1,
+        height: 1,
+        centerX: 0,
+        centerY: 0,
+        radius: 0
+      };
+
+      function resizeCanvasToDisplaySize() {
+        const bounds = canvas.getBoundingClientRect();
+        const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+        const displayWidth = Math.max(1, Math.floor(bounds.width));
+        const displayHeight = Math.max(1, Math.floor(bounds.height));
+
+        const neededWidth = Math.floor(displayWidth * dpr);
+        const neededHeight = Math.floor(displayHeight * dpr);
+
+        if (canvas.width !== neededWidth || canvas.height !== neededHeight || render.devicePixelRatio !== dpr) {
+          canvas.width = neededWidth;
+          canvas.height = neededHeight;
+          render.devicePixelRatio = dpr;
+        }
+
+        render.width = canvas.width;
+        render.height = canvas.height;
+        render.centerX = render.width * 0.5;
+        render.centerY = render.height * 0.5;
+        render.radius = Math.min(render.width, render.height) * 0.48;
+      }
+
+      window.addEventListener("resize", resizeCanvasToDisplaySize);
+
+      /* ----------------------------
+         Utility helpers
+      ---------------------------- */
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function smoothstep(edge0, edge1, x) {
+        const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+        return t * t * (3 - 2 * t);
+      }
+
+      function hashToUnitFloat(seed) {
+        let x = seed | 0;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        return ((x >>> 0) % 1000000) / 1000000;
+      }
+
+      function colorWithAlpha(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+      }
+
+      function sanitizeUrl(urlRaw) {
+        const url = String(urlRaw || "").trim();
+        if (!url) return "";
+        // Allow http(s) and mailto; otherwise keep but treat as empty (safety baseline)
+        if (/^(https?:\/\/)/i.test(url)) return url;
+        if (/^mailto:/i.test(url)) return url;
+        // Support user typing without scheme: treat as https
+        if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(url)) return "https://" + url;
+        return "";
+      }
+
+      function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#039;"
+        }[c]));
+      }
+
+      /* ----------------------------
+         Starfield model (3 parallax layers)
+      ---------------------------- */
+      const starLayers = [
+        { count: 260, depth: 0.25, sizeMin: 0.6, sizeMax: 1.6, speedFactor: 0.30 },
+        { count: 180, depth: 0.55, sizeMin: 0.9, sizeMax: 2.2, speedFactor: 0.60 },
+        { count: 110, depth: 0.95, sizeMin: 1.2, sizeMax: 3.2, speedFactor: 1.00 }
+      ];
+
+      const stars = [];
+      let starSeed = 1337;
+
+      function createStars() {
+        stars.length = 0;
+        starLayers.forEach((layer, layerIndex) => {
+          for (let i = 0; i < layer.count; i++) {
+            const s = starSeed++;
+            const x = hashToUnitFloat(s * 97 + 11) * 2 - 1;
+            const y = hashToUnitFloat(s * 131 + 29) * 2 - 1;
+            const tw = hashToUnitFloat(s * 193 + 7);
+            const brightness = 0.35 + tw * 0.65;
+            const size = layer.sizeMin + (layer.sizeMax - layer.sizeMin) * hashToUnitFloat(s * 57 + 101);
+            stars.push({
+              layerIndex,
+              x,
+              y,
+              brightness,
+              size,
+              twinklePhase: hashToUnitFloat(s * 211 + 3) * Math.PI * 2
+            });
+          }
+        });
+      }
+
+      /* ----------------------------
+         Zodiac constellations data (stylized)
+      ---------------------------- */
+      const zodiacCatalog = [
+        { key: "aries", labelRu: "Овен", glyph: "♈", points: [[-0.55,-0.08],[-0.25,-0.18],[0.00,-0.05],[0.22,0.12],[0.48,0.06]], edges: [[0,1],[1,2],[2,3],[3,4]] },
+        { key: "taurus", labelRu: "Телец", glyph: "♉", points: [[-0.55,0.20],[-0.20,0.05],[0.10,0.15],[0.45,0.02],[-0.05,-0.22],[0.20,-0.28]], edges: [[0,1],[1,2],[2,3],[1,4],[4,5]] },
+        { key: "gemini", labelRu: "Близнецы", glyph: "♊", points: [[-0.35,-0.30],[-0.35,0.32],[0.35,-0.28],[0.35,0.34],[-0.05,0.10],[0.05,-0.08]], edges: [[0,1],[2,3],[0,2],[1,3],[4,5]] },
+        { key: "cancer", labelRu: "Рак", glyph: "♋", points: [[-0.40,0.05],[-0.15,0.22],[0.10,0.12],[0.35,-0.05],[0.05,-0.22]], edges: [[0,1],[1,2],[2,3],[2,4],[4,0]] },
+        { key: "leo", labelRu: "Лев", glyph: "♌", points: [[-0.55,0.15],[-0.25,0.28],[0.00,0.18],[0.22,0.00],[0.10,-0.22],[-0.18,-0.15],[0.48,-0.08]], edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[3,6]] },
+        { key: "virgo", labelRu: "Дева", glyph: "♍", points: [[-0.52,-0.10],[-0.25,0.10],[-0.05,0.30],[0.18,0.18],[0.42,0.05],[0.15,-0.10],[-0.05,-0.28]], edges: [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,1]] },
+        { key: "libra", labelRu: "Весы", glyph: "♎", points: [[-0.55,-0.05],[-0.25,-0.12],[0.00,-0.05],[0.25,-0.12],[0.55,-0.05],[-0.25,0.18],[0.25,0.18]], edges: [[0,1],[1,2],[2,3],[3,4],[1,5],[3,6],[5,6]] },
+        { key: "scorpio", labelRu: "Скорпион", glyph: "♏", points: [[-0.55,0.05],[-0.30,0.10],[-0.05,0.02],[0.18,-0.05],[0.36,-0.18],[0.50,-0.04],[0.40,0.20]], edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]] },
+        { key: "sagittarius", labelRu: "Стрелец", glyph: "♐", points: [[-0.52,-0.18],[-0.20,0.00],[0.00,0.28],[0.22,0.05],[0.55,0.18],[0.28,-0.25],[0.05,-0.05]], edges: [[0,1],[1,2],[2,3],[3,4],[3,5],[1,6],[6,3]] },
+        { key: "capricorn", labelRu: "Козерог", glyph: "♑", points: [[-0.55,0.15],[-0.28,0.02],[-0.02,0.10],[0.20,-0.05],[0.50,-0.18],[0.35,0.22]], edges: [[0,1],[1,2],[2,3],[3,4],[3,5],[2,5]] },
+        { key: "aquarius", labelRu: "Водолей", glyph: "♒", points: [[-0.55,0.10],[-0.30,0.18],[-0.05,0.05],[0.20,0.16],[0.45,0.04],[0.55,-0.10],[0.25,-0.08],[-0.10,-0.18]], edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[4,6],[6,7],[7,2]] },
+        { key: "pisces", labelRu: "Рыбы", glyph: "♓", points: [[-0.55,0.00],[-0.30,0.18],[-0.05,0.10],[0.20,-0.02],[0.45,-0.18],[0.55,0.05],[0.25,0.18]], edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,2]] }
+      ];
+
+      /* ----------------------------
+         Links UI + localStorage
+      ---------------------------- */
+      function loadLinksFromStorage() {
+        try {
+          const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (!raw) return Object.create(null);
+          const parsed = JSON.parse(raw);
+          const map = Object.create(null);
+          for (const entry of zodiacCatalog) {
+            const v = parsed && typeof parsed === "object" ? parsed[entry.key] : "";
+            const sanitized = sanitizeUrl(v);
+            if (sanitized) map[entry.key] = sanitized;
+          }
+          return map;
+        } catch (e) {
+          return Object.create(null);
+        }
+      }
+
+      function saveLinksToStorage() {
+        const payload = Object.create(null);
+        for (const entry of zodiacCatalog) {
+          payload[entry.key] = state.zodiacLinks[entry.key] || "";
+        }
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      let saveDebounceHandle = null;
+      function scheduleSaveLinks() {
+        if (saveDebounceHandle) window.clearTimeout(saveDebounceHandle);
+        saveDebounceHandle = window.setTimeout(() => {
+          saveLinksToStorage();
+        }, 250);
+      }
+
+      function buildLinksPanel() {
+        linksList.innerHTML = "";
+        for (const entry of zodiacCatalog) {
+          const row = document.createElement("div");
+          row.className = "link-row";
+
+          const label = document.createElement("div");
+          label.className = "sign-label";
+          label.innerHTML = '<span class="sign-glyph">' + escapeHtml(entry.glyph) + '</span><span>' + escapeHtml(entry.labelRu) + '</span>';
+
+          const input = document.createElement("input");
+          input.className = "url-input";
+          input.type = "url";
+          input.inputMode = "url";
+          input.autocomplete = "off";
+          input.spellcheck = false;
+          input.placeholder = "https://example.com";
+          input.value = state.zodiacLinks[entry.key] || "";
+
+          input.addEventListener("input", () => {
+            const sanitized = sanitizeUrl(input.value);
+            // Do not erase user typing in the UI instantly; store sanitized only if valid, else store empty.
+            state.zodiacLinks[entry.key] = sanitized;
+            scheduleSaveLinks();
+          });
+
+          row.appendChild(label);
+          row.appendChild(input);
+          linksList.appendChild(row);
+        }
+      }
+
+      /* ----------------------------
+         Constellation instances + hit data
+      ---------------------------- */
+      const constellationInstances = [];
+      const constellationConfig = {
+        maxInstances: 5,
+        spawnIntervalSeconds: 4.8,
+        baseLifeSeconds: 14,
+        sizeMin: 0.23,
+        sizeMax: 0.42
+      };
+
+      let constellationSeed = 9001;
+      let timeSinceLastSpawn = 0;
+      let instanceIdCounter = 1;
+
+      // Per-frame hit cache: instanceId -> {x,y,r,clickable,entryKey,labelRu,glyph,url}
+      const hitCache = new Map();
+
+      function spawnConstellationInstance(nowSeconds) {
+        const index = Math.floor(hashToUnitFloat(++constellationSeed * 77 + 19) * zodiacCatalog.length);
+        const entry = zodiacCatalog[index];
+
+        const angle = hashToUnitFloat(++constellationSeed * 91 + 3) * Math.PI * 2;
+        const spawnRadius = 1.18;
+        const startX = Math.cos(angle) * spawnRadius;
+        const startY = Math.sin(angle) * spawnRadius;
+
+        const driftAngle = angle + Math.PI + (hashToUnitFloat(++constellationSeed * 33 + 17) * 0.65 - 0.325);
+        const driftSpeed = 0.07 + 0.10 * hashToUnitFloat(++constellationSeed * 55 + 7);
+
+        const scale = constellationConfig.sizeMin +
+          (constellationConfig.sizeMax - constellationConfig.sizeMin) * hashToUnitFloat(++constellationSeed * 21 + 13);
+
+        const rotation = (hashToUnitFloat(++constellationSeed * 41 + 23) * 2 - 1) * 0.55;
+
+        const life = constellationConfig.baseLifeSeconds *
+          (0.85 + 0.45 * hashToUnitFloat(++constellationSeed * 27 + 5));
+
+        constellationInstances.push({
+          id: instanceIdCounter++,
+          entry,
+          birthTime: nowSeconds,
+          lifeSeconds: life,
+          x: startX,
+          y: startY,
+          vx: Math.cos(driftAngle) * driftSpeed,
+          vy: Math.sin(driftAngle) * driftSpeed,
+          scale,
+          rotation,
+          flickerPhase: hashToUnitFloat(++constellationSeed * 111 + 9) * Math.PI * 2
+        });
+      }
+
+      function updateConstellations(deltaSeconds, nowSeconds) {
+        timeSinceLastSpawn += deltaSeconds;
+
+        const desiredInterval = state.warp
+          ? constellationConfig.spawnIntervalSeconds * 0.65
+          : constellationConfig.spawnIntervalSeconds;
+
+        while (timeSinceLastSpawn >= desiredInterval && constellationInstances.length < constellationConfig.maxInstances) {
+          timeSinceLastSpawn -= desiredInterval;
+          spawnConstellationInstance(nowSeconds);
+        }
+
+        for (let i = constellationInstances.length - 1; i >= 0; i--) {
+          const inst = constellationInstances[i];
+          inst.x += inst.vx * deltaSeconds;
+          inst.y += inst.vy * deltaSeconds;
+
+          const age = nowSeconds - inst.birthTime;
+          if (age > inst.lifeSeconds) {
+            // clear hover if needed
+            if (state.hoveredInstanceId === inst.id) state.hoveredInstanceId = null;
+            constellationInstances.splice(i, 1);
+          }
+        }
+
+        if (constellationInstances.length === 0 && nowSeconds > 0.2) {
+          spawnConstellationInstance(nowSeconds);
+        }
+      }
+
+      /* ----------------------------
+         Rendering: porthole clipping
+      ---------------------------- */
+      function beginPortholeClip() {
+        context.save();
+        context.beginPath();
+        context.arc(render.centerX, render.centerY, render.radius, 0, Math.PI * 2);
+        context.closePath();
+        context.clip();
+      }
+
+      function endPortholeClip() {
+        context.restore();
+      }
+
+      function drawSpaceBackground() {
+        const gradient = context.createRadialGradient(
+          render.centerX * 0.85, render.centerY * 0.75, render.radius * 0.2,
+          render.centerX, render.centerY, render.radius * 1.2
+        );
+        gradient.addColorStop(0, "#0c1020");
+        gradient.addColorStop(0.55, "#070a16");
+        gradient.addColorStop(1, "#03040b");
+
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, render.width, render.height);
+      }
+
+      function drawVignette() {
+        const vignette = context.createRadialGradient(
+          render.centerX, render.centerY, render.radius * 0.55,
+          render.centerX, render.centerY, render.radius * 1.02
+        );
+        vignette.addColorStop(0, "rgba(0,0,0,0.00)");
+        vignette.addColorStop(0.72, "rgba(0,0,0,0.10)");
+        vignette.addColorStop(1, "rgba(0,0,0,0.55)");
+        context.fillStyle = vignette;
+        context.fillRect(0, 0, render.width, render.height);
+
+        context.strokeStyle = "rgba(255,255,255,0.06)";
+        context.lineWidth = Math.max(1, render.radius * 0.004);
+        context.beginPath();
+        context.arc(render.centerX, render.centerY, render.radius * 0.995, 0, Math.PI * 2);
+        context.stroke();
+      }
+
+      function drawStars(nowSeconds, cameraOffsetX, cameraOffsetY, baseSpeedPixelsPerSecond, warpIntensity) {
+        const time = nowSeconds;
+
+        for (let i = 0; i < stars.length; i++) {
+          const star = stars[i];
+          const layer = starLayers[star.layerIndex];
+
+          const parallax = layer.depth;
+          const camX = cameraOffsetX * parallax;
+          const camY = cameraOffsetY * parallax;
+
+          const speed = baseSpeedPixelsPerSecond * layer.speedFactor;
+          const normPerSecond = speed / Math.max(1, render.radius * 2.2);
+
+          const driftX = (0.08 + 0.10 * layer.depth) * normPerSecond;
+          const driftY = (0.24 + 0.18 * layer.depth) * normPerSecond;
+
+          let x = star.x + time * driftX;
+          let y = star.y + time * driftY;
+
+          x = ((x + 1) % 2) - 1;
+          y = ((y + 1) % 2) - 1;
+
+          const px = render.centerX + x * render.radius + camX;
+          const py = render.centerY + y * render.radius + camY;
+
+          if (
+            px < render.centerX - render.radius * 1.15 || px > render.centerX + render.radius * 1.15 ||
+            py < render.centerY - render.radius * 1.15 || py > render.centerY + render.radius * 1.15
+          ) continue;
+
+          const twinkle = 0.78 + 0.22 * Math.sin(nowSeconds * (1.4 + layer.depth) + star.twinklePhase);
+          const alpha = clamp(star.brightness * twinkle, 0.15, 1.0);
+
+          const tint = 0.06 + 0.08 * layer.depth;
+          context.fillStyle = "rgba(" +
+            Math.floor(220 + 20 * tint) + "," +
+            Math.floor(230 + 10 * tint) + "," +
+            Math.floor(255) + "," + (alpha * 0.95) + ")";
+
+          const size = star.size * render.devicePixelRatio;
+          const r = Math.max(0.6, size);
+
+          if (warpIntensity > 0.02) {
+            const streakLength = r * (3.0 + 22.0 * warpIntensity) * layer.depth;
+            const dx = -driftX * render.radius * (30 + 90 * warpIntensity);
+            const dy = -driftY * render.radius * (30 + 90 * warpIntensity);
+
+            context.strokeStyle = "rgba(255,255,255," + (alpha * (0.20 + 0.30 * warpIntensity)) + ")";
+            context.lineWidth = Math.max(1, r * 0.55);
+            context.beginPath();
+            context.moveTo(px, py);
+            const hyp = Math.max(1, Math.hypot(dx, dy));
+            context.lineTo(
+              px + dx * 0.02 + (dx / hyp) * streakLength,
+              py + dy * 0.02 + (dy / hyp) * streakLength
+            );
+            context.stroke();
+
+            context.fillStyle = "rgba(255,255,255," + (alpha * (0.70 + 0.20 * warpIntensity)) + ")";
+            context.beginPath();
+            context.arc(px, py, r * 0.75, 0, Math.PI * 2);
+            context.fill();
+          } else {
+            context.beginPath();
+            context.arc(px, py, r * 0.65, 0, Math.PI * 2);
+            context.fill();
+
+            context.fillStyle = "rgba(94,255,171," + (alpha * 0.05) + ")";
+            context.beginPath();
+            context.arc(px, py, r * 2.5, 0, Math.PI * 2);
+            context.fill();
+          }
+        }
+      }
+
+      /* ----------------------------
+         Constellations drawing + hit cache population
+      ---------------------------- */
+      function drawConstellationInstance(inst, nowSeconds, cameraOffsetX, cameraOffsetY) {
+        const age = nowSeconds - inst.birthTime;
+        const life = inst.lifeSeconds;
+
+        const fadeIn = smoothstep(0.0, 1.8, age);
+        const fadeOut = 1.0 - smoothstep(life - 2.2, life, age);
+        const fade = clamp(fadeIn * fadeOut, 0, 1);
+
+        const flicker = 0.86 + 0.14 * Math.sin(nowSeconds * 2.2 + inst.flickerPhase);
+        const alpha = fade * flicker;
+        if (alpha <= 0.01) {
+          hitCache.delete(inst.id);
+          return;
+        }
+
+        const px = render.centerX + inst.x * render.radius + cameraOffsetX * 0.42;
+        const py = render.centerY + inst.y * render.radius + cameraOffsetY * 0.42;
+
+        const scale = inst.scale * render.radius;
+        const rot = inst.rotation;
+
+        const cosR = Math.cos(rot);
+        const sinR = Math.sin(rot);
+
+        function transformPoint(point) {
+          const x = point[0] * scale;
+          const y = point[1] * scale;
+          return {
+            x: px + x * cosR - y * sinR,
+            y: py + x * sinR + y * cosR
+          };
+        }
+
+        // Hover glow boost if clickable and hovered
+        const url = state.zodiacLinks[inst.entry.key] || "";
+        const clickable = Boolean(url);
+        const hovered = (state.hoveredInstanceId === inst.id);
+
+        const accent = "#5EFFAB";
+        const glowBoost = (clickable && hovered) ? 1.25 : 1.0;
+
+        const lineOuter = colorWithAlpha(accent, 0.10 * alpha * glowBoost);
+        const lineMid = colorWithAlpha(accent, 0.28 * alpha * glowBoost);
+        const lineCore = colorWithAlpha(accent, 0.70 * alpha * (clickable ? 1.04 : 1.0));
+
+        context.lineCap = "round";
+        context.lineJoin = "round";
+
+        const baseWidth = Math.max(1, render.radius * 0.0045);
+        const glowWidth = baseWidth * (4.2 * glowBoost);
+
+        // Collect transformed points once (also used for hit test radius)
+        const transformed = new Array(inst.entry.points.length);
+        let sumX = 0, sumY = 0;
+        for (let i = 0; i < inst.entry.points.length; i++) {
+          const p = transformPoint(inst.entry.points[i]);
+          transformed[i] = p;
+          sumX += p.x;
+          sumY += p.y;
+        }
+
+        // Hit radius (bounding circle around transformed points)
+        const cx = sumX / transformed.length;
+        const cy = sumY / transformed.length;
+
+        let maxD = 0;
+        for (let i = 0; i < transformed.length; i++) {
+          const dx = transformed[i].x - cx;
+          const dy = transformed[i].y - cy;
+          const d = Math.hypot(dx, dy);
+          if (d > maxD) maxD = d;
+        }
+
+        // Add padding to cover label and make clicking easier
+        const hitPadding = Math.max(14 * render.devicePixelRatio, render.radius * 0.035);
+        const hitRadius = maxD + hitPadding;
+
+        hitCache.set(inst.id, {
+          id: inst.id,
+          x: cx,
+          y: cy,
+          r: hitRadius,
+          clickable,
+          url,
+          entryKey: inst.entry.key,
+          labelRu: inst.entry.labelRu,
+          glyph: inst.entry.glyph,
+          alpha
+        });
+
+        // Outer glow lines
+        context.strokeStyle = lineOuter;
+        context.lineWidth = glowWidth;
+        context.beginPath();
+        for (const edge of inst.entry.edges) {
+          const a = transformed[edge[0]];
+          const b = transformed[edge[1]];
+          context.moveTo(a.x, a.y);
+          context.lineTo(b.x, b.y);
+        }
+        context.stroke();
+
+        // Mid glow lines
+        context.strokeStyle = lineMid;
+        context.lineWidth = baseWidth * (2.2 * glowBoost);
+        context.beginPath();
+        for (const edge of inst.entry.edges) {
+          const a = transformed[edge[0]];
+          const b = transformed[edge[1]];
+          context.moveTo(a.x, a.y);
+          context.lineTo(b.x, b.y);
+        }
+        context.stroke();
+
+        // Core lines
+        context.strokeStyle = lineCore;
+        context.lineWidth = baseWidth * 1.05;
+        context.beginPath();
+        for (const edge of inst.entry.edges) {
+          const a = transformed[edge[0]];
+          const b = transformed[edge[1]];
+          context.moveTo(a.x, a.y);
+          context.lineTo(b.x, b.y);
+        }
+        context.stroke();
+
+        // Stars at points
+        for (let i = 0; i < transformed.length; i++) {
+          const p = transformed[i];
+          const starR = baseWidth * (1.6 + (i % 3) * 0.55);
+
+          const starGlowAlpha = (clickable ? 0.18 : 0.13) * alpha * (hovered ? 1.25 : 1.0);
+          context.fillStyle = colorWithAlpha(accent, starGlowAlpha);
+          context.beginPath();
+          context.arc(p.x, p.y, starR * 3.2 * (hovered ? 1.10 : 1.0), 0, Math.PI * 2);
+          context.fill();
+
+          context.fillStyle = "rgba(240,255,250," + (0.72 * alpha) + ")";
+          context.beginPath();
+          context.arc(p.x, p.y, starR * 0.95, 0, Math.PI * 2);
+          context.fill();
+        }
+
+        // Label
+        if (state.showNames) {
+          const label = inst.entry.glyph + " " + inst.entry.labelRu;
+
+          // label anchor: use normalized center of entry, then transform
+          let nSumX = 0, nSumY = 0;
+          for (const pt of inst.entry.points) { nSumX += pt[0]; nSumY += pt[1]; }
+          const ncx = nSumX / inst.entry.points.length;
+          const ncy = nSumY / inst.entry.points.length;
+
+          const labelAnchor = transformPoint([ncx, ncy]);
+          const labelOffsetX = (0.18 * scale) * cosR - (-0.18 * scale) * sinR;
+          const labelOffsetY = (0.18 * scale) * sinR + (-0.18 * scale) * cosR;
+
+          const tx = labelAnchor.x + labelOffsetX;
+          const ty = labelAnchor.y + labelOffsetY;
+
+          const fontSize = Math.max(12, Math.round(render.radius * 0.045));
+          context.font = "600 " + fontSize + "px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Roboto Mono', monospace";
+          context.textAlign = "left";
+          context.textBaseline = "middle";
+
+          const labelGlowAlpha = (clickable ? 0.16 : 0.12) * alpha * (hovered ? 1.25 : 1.0);
+          context.fillStyle = colorWithAlpha("#5EFFAB", labelGlowAlpha);
+          context.fillText(label, tx + 1, ty + 1);
+          context.fillText(label, tx - 1, ty - 1);
+
+          const labelCoreAlpha = (clickable ? 0.88 : 0.78) * alpha;
+          context.fillStyle = "rgba(200,255,228," + labelCoreAlpha + ")";
+          context.fillText(label, tx, ty);
+
+          // underline scanline
+          const metrics = context.measureText(label);
+          const underlineY = ty + Math.max(10, render.radius * 0.018);
+          context.strokeStyle = colorWithAlpha("#5EFFAB", (clickable ? 0.32 : 0.25) * alpha);
+          context.lineWidth = Math.max(1, render.radius * 0.0028);
+          context.beginPath();
+          context.moveTo(tx, underlineY);
+          context.lineTo(tx + metrics.width * 0.6, underlineY);
+          context.stroke();
+
+          // small link indicator if URL exists
+          if (clickable) {
+            context.font = "700 " + Math.max(11, Math.round(fontSize * 0.78)) + "px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Roboto Mono', monospace";
+            context.fillStyle = "rgba(160,255,220," + (0.62 * alpha) + ")";
+            context.fillText("↗", tx + metrics.width + 8, ty);
+          }
+        }
+      }
+
+      function drawConstellations(nowSeconds, cameraOffsetX, cameraOffsetY) {
+        hitCache.clear();
+        for (let i = 0; i < constellationInstances.length; i++) {
+          drawConstellationInstance(constellationInstances[i], nowSeconds, cameraOffsetX, cameraOffsetY);
+        }
+      }
+
+      /* ----------------------------
+         Optional canvas ring glow (very light)
+      ---------------------------- */
+      function drawCanvasNeonRing(nowSeconds) {
+        // Very subtle inner neon on the glass edge (kept cheap)
+        const pulse = 0.55 + 0.45 * Math.sin(nowSeconds * 1.1);
+        const ringWidth = Math.max(1, render.radius * 0.012);
+
+        context.save();
+        context.globalCompositeOperation = "screen";
+        context.strokeStyle = "rgba(0,255,200," + (0.06 + 0.03 * pulse) + ")";
+        context.lineWidth = ringWidth;
+        context.beginPath();
+        context.arc(render.centerX, render.centerY, render.radius * 0.995, 0, Math.PI * 2);
+        context.stroke();
+
+        context.strokeStyle = "rgba(94,255,171," + (0.045 + 0.02 * pulse) + ")";
+        context.lineWidth = ringWidth * 2.1;
+        context.beginPath();
+        context.arc(render.centerX, render.centerY, render.radius * 0.988, 0, Math.PI * 2);
+        context.stroke();
+
+        context.restore();
+      }
+
+      /* ----------------------------
+         Interactivity: hover + click hit testing
+      ---------------------------- */
+      function canvasPointFromEvent
